@@ -46,6 +46,43 @@ module Agents
       }
     end
 
+    event_description <<-MD
+      Events look like:
+        {
+          "RetryCount": "0",
+          "EventType": "onMessageAdded",
+          "Attributes": "{}",
+          "DateCreated": "2022-01-09T22:17:14.048Z",
+          "Author": "+13025550012",
+          "Index": "1810",
+          "MessageSid": "IMXXXXXXXXXXXXXXX",
+          "ParticipantSid": "MBXXXXXXXXXXXX",
+          "Body": "I think it's raining.",
+          "AccountSid": "ACXXXXXXXXXXXXXXX",
+          "Source": "SMS",
+          "ConversationSid": "CHXXXXXXXXXXXXXX",
+          "Participants": [
+            "+13025550012",
+            "+13025550013"
+          ],
+          "NamedParticipants": [
+            "Example 1",
+            "Example 2"
+          ],
+          "Media": "{}",
+          "TempLinks": [
+            "https://....",
+            "https://...."
+          ]
+        }
+
+        Some Notes:
+        - "Media" and "TempLinks" are only present if the message has attachments (e.g. images).
+        - "TempLinks" are temporary and will expire after a few hours
+        - "NamedParticipants" are based off of the "phone_book" entries. If an entry doesn't match it returns the number
+        - Only EventType onMessageAdded is supported.
+    MD
+
     def validate_options
       errors.add(:base, 'account_sid is required') unless options['account_sid'].present?
       errors.add(:base, 'auth_token is required') unless options['auth_token'].present?
@@ -90,8 +127,29 @@ module Agents
         return ["Not Authorized", 401]
       end
       
-      #TODO: Do stuff here
-      #
+
+      if params['ConversationSid'].present?
+        params['Participants'] = get_participants(params['ConversationSid'])
+        named_participants = params['Participants'].each_with_object([]) do |p, l|
+          l << phonebook_lookup(p)
+        end
+        params['NamedParticipants'] = named_participants
+      end
+      if params['Media'].present?
+        params['TempLinks'] = media_collect(params['Media'])
+      end
+
+      if create_event(payload: params)
+        response = Twilio::TwiML::MessagingResponse.new do |r|
+          if interpolated['reply_text'].present?
+            r.message(body: interpolated['reply_text'])
+          end
+        end
+        return [response.to_s, 200, "text/xml"]
+      else
+        response ["Bad Request", 400]
+      end
+
     end
 
     def phonebook_lookup(number)
@@ -123,6 +181,15 @@ module Agents
 
     def twilio_client
       @twilio_client ||= Twilio::REST::Client.new interpolated['account_sid'], interpolated['auth_token']
+    end
+
+    def media_collect(media_json)
+      media = JSON.parse(media_json)
+      links = media.each_with_object([]) do |h, l|
+        link = media_get_link(h['Sid'])
+        l << link if link
+      end
+      links
     end
 
     def media_get_link(media_sid)
