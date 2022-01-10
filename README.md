@@ -18,7 +18,7 @@ For those currently looking for a way to get conversations working, I suggest th
   "message": "{{message}}"
 }
 ```
-- Use the (Twilio Get Participants Agent)[https://github.com/paul-sx/huginn_twilio_get_participants_agent] to add a list of participants to your event
+- Use the [Twilio Get Participants Agent](https://github.com/paul-sx/huginn_twilio_get_participants_agent) to add a list of participants to your event
 ```
 {
   "account_sid": "{% credential twilio_account_sid %}",
@@ -37,7 +37,7 @@ For those currently looking for a way to get conversations working, I suggest th
   ]
 }
 ```
-- Use the (Twilio Get Media Urls Agent)[https://github.com/paul-sx/huginn_twilio_get_media_urls_agent] to get a list of the media urls to download
+- Use the [Twilio Get Media Urls Agent](https://github.com/paul-sx/huginn_twilio_get_media_urls_agent) to get a list of the media urls to download
 ```
 {
   "account_sid": "{% credential twilio_account_sid %}",
