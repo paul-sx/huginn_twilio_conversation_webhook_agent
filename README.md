@@ -1,8 +1,68 @@
 # TwilioConversationWebhookAgent
 
-Welcome to your new agent gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/huginn_twilio_conversation_webhook_agent`. To experiment with that code, run `bin/console` for an interactive prompt.
+## **NOTE** This agent is a work in progress and probably doesn't work right. 
+For those currently looking for a way to get conversations working, I suggest the following:
+- Use the   `Twilio Receive Text Agent` as the webhook for your incoming texts.
+- Test for onMessageAdded to filter conversations with a Trigger Agent
+```
+{
+  "expected_receive_period_in_days": "25",
+  "keep_event": "true",
+  "rules": [
+    {
+      "type": "field==value",
+      "value": "onMessageAdded",
+      "path": "EventType"
+    }
+  ],
+  "message": "{{message}}"
+}
+```
+- Use the (Twilio Get Participants Agent)[https://github.com/paul-sx/huginn_twilio_get_participants_agent] to add a list of participants to your event
+```
+{
+  "account_sid": "{% credential twilio_account_sid %}",
+  "auth_token": "{% credential twilio_auth_token %}",
+  "expected_receive_period_in_days": "30",
+  "conversation_sid": "{{ ConversationSid }}"
+}
+```
+- Trigger with the existance of the `Media` key to locate media
+ ```
+ {
+  "expected_receive_period_in_days": "20",
+  "keep_event": "true",
+  "rules": [
+    "{% assign returned =  false %}{% if Media%}{% assign returned = true %}{% endif %}{{returned}}"
+  ]
+}
+```
+- Use the (Twilio Get Media Urls Agent)[https://github.com/paul-sx/huginn_twilio_get_media_urls_agent] to get a list of the media urls to download
+```
+{
+  "account_sid": "{% credential twilio_account_sid %}",
+  "auth_token": "{% credential twilio_auth_token %}",
+  "chat_sid": "ISXXXXXXXXXXXXXX"
+}
+```
+- Use the presence of the Body key to determine if there is text in the message
+```
+{
+  "expected_receive_period_in_days": "20",
+  "keep_event": "true",
+  "rules": [
+    "{% assign returned =  false %}{% if Body%}{% assign returned = true %}{% endif %}{{returned}}"
+  ]
+}
+```
 
-TODO: Delete this and the text above, and describe your gem
+
+## Agent Summary
+This agent is intended to serve as a replacement for the Standard `Twilio Receive Text Agent` agent for use with Twilio conversations.  The existing agent does function as a receiver for conversations, but lacks much of the necessary pieces to be fully useful.  In particular, the existing agent doesn't include the participants or any media files.  
+
+
+
+
 
 ## Installation
 
@@ -11,9 +71,9 @@ This gem is run as part of the [Huginn](https://github.com/huginn/huginn) projec
 Add this string to your Huginn's .env `ADDITIONAL_GEMS` configuration:
 
 ```ruby
-huginn_twilio_conversation_webhook_agent
+huginn_twilio_conversation_webhook_agent(github: paul-sx/huginn_twilio_conversation_webhook_agent)
 # when only using this agent gem it should look like this:
-ADDITIONAL_GEMS=huginn_twilio_conversation_webhook_agent
+ADDITIONAL_GEMS=huginn_twilio_conversation_webhook_agent(github: paul-sx/huginn_twilio_conversation_webhook_agent)
 ```
 
 And then execute:
@@ -40,7 +100,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-1. Fork it ( https://github.com/[my-github-username]/huginn_twilio_conversation_webhook_agent/fork )
+1. Fork it ( https://github.com/paul-sx/huginn_twilio_conversation_webhook_agent/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
